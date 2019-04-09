@@ -1,84 +1,69 @@
-import React, {Component, Fragment} from 'react'
-import TodoItem from './TodoItem'
-import './style.css'
+import React, { Component } from 'react'
+import { Input, Button, List } from 'antd'
+import 'antd/dist/antd.css'
+import store from './store'
 
 class TodoList extends Component {
 
   constructor (props) {
     super(props)
-    this.state = {
-      inputValue: '',
-      list: []
-    }
+    this.state = store.getState()
     this.handleInputChange = this.handleInputChange.bind(this)
+    this.handleStoreChange = this.handleStoreChange.bind(this)
     this.handleBtnClick = this.handleBtnClick.bind(this)
-    this.handleItemDelete = this.handleItemDelete.bind(this)
+    store.subscribe(this.handleStoreChange)
   }
 
   render () {
     return (
-      <Fragment>
+      <div style={{marginLeft: '10px', marginTop: '10px'}}>
         <div>
-          <label htmlFor="insertArea">输入内容</label>
-          <input
-            id="insertArea"
-            className="input"
-            type="text"
+          <Input
             value={this.state.inputValue}
+            placeholder='todo info'
+            style={{width: '300px', marginRight: '10px'}}
             onChange={this.handleInputChange}
           />
-          <button onClick={this.handleBtnClick}>提交</button>
+          <Button
+            type='primary'
+            onClick={this.handleBtnClick}
+          >提交</Button>
         </div>
-        <ul>
-          {this.getTodoItem()}
-        </ul>
-      </Fragment>
+        <List
+          style={{marginTop: '10px', width: '300px'}}
+          bordered
+          dataSource={this.state.list}
+          renderItem={(item, index) => (<List.Item onClick={this.handleItemDelete.bind(this, index)}>{item}</List.Item>)}
+        />
+      </div>
     )
   }
 
-  // 减少模板中逻辑，抽离逻辑
-  getTodoItem () {
-    return this.state.list.map((item, index) => {
-      return (
-        <TodoItem
-          content={item}
-          index={index}
-          key={index}
-          deleteItem={this.handleItemDelete}
-        />
-      )
-    })
+  handleInputChange (e) {
+    const action = {
+      type: 'change_input_value',
+      value: e.target.value
+    }
+    store.dispatch(action)
   }
 
-  handleInputChange (e) {
-    const value = e.target.value
-    this.setState(() => {
-      return {
-        inputValue: value
-      }
-    })
+  handleStoreChange () {
+    this.setState(store.getState())
   }
 
   handleBtnClick () {
-    // prevState 是 state 改变前的状态
-    this.setState((prevState) => {
-      return {
-        list: [...prevState.list, prevState.inputValue],
-        inputValue: ''
-      }
-    })
+    const action = {
+      type: 'add_todo_item'
+    }
+    store.dispatch(action)
   }
 
   handleItemDelete (index) {
-    // immutable
-    // state 不允许我们做任何直接的改变，所以，先拷贝出来
-    this.setState((prevState) => {
-      const list = [...prevState.list]
-      list.splice(index, 1)
-      return {
-        list
-      }
-    })
+    const action = {
+      type: 'delete_todo_item',
+      index
+    }
+    store.dispatch(action)
   }
 }
 
